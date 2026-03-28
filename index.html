@@ -1,9 +1,321 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Alpha Desk</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alpha Desk — Hedge Fund AI</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --hf-bg:#0a0c0f;--hf-surface:#111418;--hf-border:#1e2530;
+  --hf-green:#00d084;--hf-red:#ff4757;--hf-amber:#ffa500;
+  --hf-blue:#4a9eff;--hf-text:#e8eaf0;--hf-muted:#5a6478;
+}
+html,body{height:100%;background:#000;display:flex;justify-content:center;align-items:stretch}
+body{width:100%;max-width:1200px;flex-direction:column}
+#hf-root{
+  font-family:'IBM Plex Sans',sans-serif;
+  background:var(--hf-bg);color:var(--hf-text);
+  display:flex;flex-direction:column;height:100vh;
+}
+.hf-header{
+  background:var(--hf-surface);border-bottom:1px solid var(--hf-border);
+  padding:14px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0;
+}
+.hf-logo{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--hf-green);letter-spacing:2px;text-transform:uppercase}
+.hf-dot{width:8px;height:8px;border-radius:50%;background:var(--hf-green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.hf-status{font-size:11px;color:var(--hf-muted);font-family:'IBM Plex Mono',monospace;margin-left:auto}
+.hf-tickers{
+  background:#0d1117;border-bottom:1px solid var(--hf-border);
+  padding:8px 20px;display:flex;gap:24px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;
+}
+.hf-tickers::-webkit-scrollbar{display:none}
+.ticker{display:flex;align-items:center;gap:8px;white-space:nowrap;cursor:pointer;padding:4px 8px;border-radius:4px;transition:background .15s}
+.ticker:hover{background:rgba(255,255,255,.04)}
+.ticker-sym{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--hf-text)}
+.ticker-price{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--hf-muted)}
+.ticker-chg{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:2px 5px;border-radius:3px}
+.up{color:var(--hf-green);background:rgba(0,208,132,.1)}
+.dn{color:var(--hf-red);background:rgba(255,71,87,.1)}
+.hf-body{display:flex;flex:1;overflow:hidden}
+.hf-sidebar{
+  width:220px;min-width:220px;background:var(--hf-surface);
+  border-right:1px solid var(--hf-border);padding:16px 0;
+  display:flex;flex-direction:column;gap:4px;overflow-y:auto;
+}
+.sidebar-label{font-size:10px;font-weight:600;color:var(--hf-muted);letter-spacing:1.5px;text-transform:uppercase;padding:8px 16px 4px;font-family:'IBM Plex Mono',monospace}
+.sidebar-btn{
+  display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;
+  font-size:13px;color:var(--hf-muted);border:none;background:none;width:100%;text-align:left;
+  transition:all .15s;border-left:2px solid transparent;font-family:'IBM Plex Sans',sans-serif;
+}
+.sidebar-btn:hover{color:var(--hf-text);background:rgba(255,255,255,.03)}
+.sidebar-btn.active{color:var(--hf-green);border-left-color:var(--hf-green);background:rgba(0,208,132,.05)}
+.sidebar-btn .icon{font-size:14px;width:16px;text-align:center}
+.hf-main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.hf-chat{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;scrollbar-width:thin;scrollbar-color:var(--hf-border) transparent}
+.msg{display:flex;flex-direction:column;gap:6px;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.msg-meta{font-size:10px;color:var(--hf-muted);font-family:'IBM Plex Mono',monospace;display:flex;align-items:center;gap:6px}
+.msg-meta .badge{padding:1px 6px;border-radius:3px;font-weight:600;letter-spacing:.5px}
+.badge-ai{background:rgba(0,208,132,.15);color:var(--hf-green)}
+.badge-user{background:rgba(74,158,255,.15);color:var(--hf-blue)}
+.msg-bubble{
+  background:var(--hf-surface);border:1px solid var(--hf-border);
+  border-radius:8px;padding:14px 16px;font-size:14px;line-height:1.7;color:var(--hf-text);
+}
+.msg-bubble.user-bubble{
+  background:rgba(74,158,255,.06);border-color:rgba(74,158,255,.2);
+  align-self:flex-end;max-width:85%;
+}
+.msg-bubble strong{color:var(--hf-green);font-weight:500}
+.msg-bubble .signal{display:inline-block;padding:1px 8px;border-radius:3px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600}
+.sig-bull{background:rgba(0,208,132,.15);color:var(--hf-green)}
+.sig-bear{background:rgba(255,71,87,.15);color:var(--hf-red)}
+.sig-neut{background:rgba(255,165,0,.15);color:var(--hf-amber)}
+.thinking{display:flex;align-items:center;gap:8px;padding:12px 16px;background:var(--hf-surface);border:1px solid var(--hf-border);border-radius:8px}
+.thinking-dots{display:flex;gap:4px}
+.thinking-dots span{width:5px;height:5px;border-radius:50%;background:var(--hf-green);animation:bounce 1.2s infinite}
+.thinking-dots span:nth-child(2){animation-delay:.2s}
+.thinking-dots span:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}
+.thinking-txt{font-size:12px;color:var(--hf-muted);font-family:'IBM Plex Mono',monospace}
+.hf-input-area{border-top:1px solid var(--hf-border);padding:16px 20px;background:var(--hf-surface);flex-shrink:0}
+.quick-prompts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.qp{
+  font-size:11px;color:var(--hf-muted);border:1px solid var(--hf-border);
+  background:none;border-radius:4px;padding:5px 10px;cursor:pointer;
+  font-family:'IBM Plex Mono',monospace;transition:all .15s;
+}
+.qp:hover{color:var(--hf-green);border-color:var(--hf-green);background:rgba(0,208,132,.05)}
+.input-row{display:flex;gap:10px;align-items:flex-end}
+.hf-textarea{
+  flex:1;background:#0d1117;border:1px solid var(--hf-border);
+  border-radius:6px;color:var(--hf-text);font-family:'IBM Plex Sans',sans-serif;
+  font-size:13px;padding:10px 14px;resize:none;outline:none;
+  transition:border-color .15s;min-height:42px;max-height:120px;line-height:1.5;
+}
+.hf-textarea:focus{border-color:var(--hf-green)}
+.hf-textarea::placeholder{color:var(--hf-muted)}
+.send-btn{
+  background:var(--hf-green);color:#000;border:none;border-radius:6px;
+  padding:10px 18px;cursor:pointer;font-size:13px;font-weight:600;
+  font-family:'IBM Plex Sans',sans-serif;transition:opacity .15s;white-space:nowrap;
+}
+.send-btn:hover{opacity:.85}
+.send-btn:disabled{opacity:.4;cursor:not-allowed}
+pre.code-block{
+  background:#0d1117;border:1px solid var(--hf-border);border-radius:6px;
+  padding:12px;font-family:'IBM Plex Mono',monospace;font-size:12px;
+  color:#a8b3c5;overflow-x:auto;margin:8px 0;line-height:1.6;
+}
+@media(max-width:600px){
+  .hf-sidebar{display:none}
+  .hf-logo{font-size:11px}
+}
+</style>
 </head>
 <body>
-  <h1>Alpha Desk is Live 🚀</h1>
+<div id="hf-root">
+  <div class="hf-header">
+    <div class="hf-logo">ALPHA DESK</div>
+    <div class="hf-dot"></div>
+    <span class="hf-status" id="mkt-status">LOADING...</span>
+  </div>
+  <div class="hf-tickers">
+    <div class="ticker"><span class="ticker-sym">SPY</span><span class="ticker-price">$571.24</span><span class="ticker-chg up">+0.82%</span></div>
+    <div class="ticker"><span class="ticker-sym">QQQ</span><span class="ticker-price">$487.61</span><span class="ticker-chg up">+1.14%</span></div>
+    <div class="ticker"><span class="ticker-sym">NVDA</span><span class="ticker-price">$112.40</span><span class="ticker-chg dn">-2.31%</span></div>
+    <div class="ticker"><span class="ticker-sym">AAPL</span><span class="ticker-price">$218.93</span><span class="ticker-chg up">+0.47%</span></div>
+    <div class="ticker"><span class="ticker-sym">MSFT</span><span class="ticker-price">$397.15</span><span class="ticker-chg up">+0.63%</span></div>
+    <div class="ticker"><span class="ticker-sym">TSLA</span><span class="ticker-price">$272.80</span><span class="ticker-chg dn">-1.88%</span></div>
+    <div class="ticker"><span class="ticker-sym">GLD</span><span class="ticker-price">$223.44</span><span class="ticker-chg up">+0.29%</span></div>
+    <div class="ticker"><span class="ticker-sym">BTC</span><span class="ticker-price">$87,412</span><span class="ticker-chg dn">-0.94%</span></div>
+    <div class="ticker"><span class="ticker-sym">VIX</span><span class="ticker-price">18.32</span><span class="ticker-chg up">+3.41%</span></div>
+  </div>
+  <div class="hf-body">
+    <div class="hf-sidebar">
+      <div class="sidebar-label">Strategies</div>
+      <button class="sidebar-btn active" onclick="setMode(this,'macro')"><span class="icon">◈</span> Global Macro</button>
+      <button class="sidebar-btn" onclick="setMode(this,'equity')"><span class="icon">◇</span> Long/Short Equity</button>
+      <button class="sidebar-btn" onclick="setMode(this,'quant')"><span class="icon">⊞</span> Quant / Factor</button>
+      <button class="sidebar-btn" onclick="setMode(this,'credit')"><span class="icon">◎</span> Credit & Fixed Inc.</button>
+      <button class="sidebar-btn" onclick="setMode(this,'event')"><span class="icon">◆</span> Event Driven</button>
+      <div class="sidebar-label" style="margin-top:8px">Tools</div>
+      <button class="sidebar-btn" onclick="setMode(this,'dcf')"><span class="icon">≡</span> DCF Model</button>
+      <button class="sidebar-btn" onclick="setMode(this,'risk')"><span class="icon">⚠</span> Risk Analysis</button>
+      <button class="sidebar-btn" onclick="setMode(this,'screen')"><span class="icon">⊟</span> Stock Screener</button>
+      <button class="sidebar-btn" onclick="setMode(this,'macro2')"><span class="icon">⊕</span> Macro Scanner</button>
+    </div>
+    <div class="hf-main">
+      <div class="hf-chat" id="chat-log">
+        <div class="msg">
+          <div class="msg-meta"><span class="badge badge-ai">ALPHA DESK AI</span> · Ready</div>
+          <div class="msg-bubble">
+            Welcome to <strong>Alpha Desk</strong> — your institutional-grade AI investment analyst.<br><br>
+            I operate as a senior portfolio manager across multiple hedge fund strategies. I can help with:<br><br>
+            • <strong>Trade thesis generation</strong> — long/short ideas with catalysts<br>
+            • <strong>Macro analysis</strong> — rates, FX, commodities, geopolitical risk<br>
+            • <strong>Fundamental deep-dives</strong> — earnings, balance sheets, valuation<br>
+            • <strong>Quantitative factor analysis</strong> — momentum, value, quality<br>
+            • <strong>Risk management</strong> — VaR, tail risk, portfolio construction<br>
+            • <strong>Event-driven setups</strong> — M&A, spin-offs, earnings plays<br><br>
+            Select a strategy on the left or ask me anything. What's on your radar?
+          </div>
+        </div>
+      </div>
+      <div class="hf-input-area">
+        <div class="quick-prompts">
+          <button class="qp" onclick="usePrompt(this)">Pitch me a long idea</button>
+          <button class="qp" onclick="usePrompt(this)">What's the macro setup for H2?</button>
+          <button class="qp" onclick="usePrompt(this)">Analyze NVDA risk/reward</button>
+          <button class="qp" onclick="usePrompt(this)">Best factor plays right now</button>
+          <button class="qp" onclick="usePrompt(this)">Build me a short thesis</button>
+          <button class="qp" onclick="usePrompt(this)">Rate hike impact on equities</button>
+        </div>
+        <div class="input-row">
+          <textarea class="hf-textarea" id="user-input" placeholder="Ask the desk anything — macro, equity, risk, valuation..." rows="1"></textarea>
+          <button class="send-btn" id="send-btn" onclick="sendMessage()">SEND ↗</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+let currentMode = 'macro';
+let conversationHistory = [];
+
+const modeContexts = {
+  macro: 'You are in Global Macro mode. Focus on central bank policy, FX dynamics, rates, commodities, geopolitical risk, and cross-asset implications. Think like Paul Tudor Jones or Ray Dalio.',
+  equity: 'You are in Long/Short Equity mode. Focus on fundamental equity analysis, catalysts, pair trades, sector rotation. Think like a Tiger cub PM.',
+  quant: 'You are in Quantitative/Factor mode. Focus on momentum, value, quality, low-vol, carry factors, statistical arbitrage, and systematic signals.',
+  credit: 'You are in Credit & Fixed Income mode. Focus on spread analysis, duration risk, credit quality, high yield vs investment grade, distressed opportunities.',
+  event: 'You are in Event Driven mode. Focus on M&A arbitrage, spin-offs, restructurings, earnings catalysts, activist situations.',
+  dcf: 'You are in DCF Modeling mode. Help build discounted cash flow models, discuss assumptions, WACC, terminal value, sensitivity analysis.',
+  risk: 'You are in Risk Analysis mode. Focus on VaR, CVaR, tail risk, drawdown analysis, correlation, portfolio stress testing, and hedging strategies.',
+  screen: 'You are in Stock Screener mode. Help identify investment ideas based on fundamental and technical screens, factor exposures, and valuation metrics.',
+  macro2: 'You are in Macro Scanner mode. Analyze economic indicators, central bank policy, yield curves, currency regimes, and commodity cycles.'
+};
+
+const systemPrompt = `You are Alpha Desk AI, a senior portfolio manager and analyst at an elite multi-strategy hedge fund. You have deep expertise across global macro, long/short equity, quantitative strategies, credit, and event-driven investing.
+
+Communication style:
+- Direct, sharp, and institutional in tone — like a PM speaking to analysts
+- Use financial terminology naturally and precisely
+- Structure responses clearly: lead with the key thesis or signal, then support
+- Use signal tags like BULLISH, BEARISH, or NEUTRAL when giving directional views
+- Reference real market dynamics, economic principles, and historical analogues
+- Include specific considerations: risk factors, catalysts, time horizon, position sizing ideas
+- Be opinionated but acknowledge risks and alternative scenarios
+- Keep responses focused and actionable
+
+Format responses with bold for key sections, bullet points for structured analysis, and BULLISH/BEARISH/NEUTRAL signals when expressing directional views.
+
+You are not providing regulated financial advice.`;
+
+function setMode(btn, mode) {
+  document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentMode = mode;
+  const modeNames = {macro:'Global Macro',equity:'Long/Short Equity',quant:'Quant/Factor',credit:'Credit & Fixed Income',event:'Event Driven',dcf:'DCF Model',risk:'Risk Analysis',screen:'Stock Screener',macro2:'Macro Scanner'};
+  addMessage('ai', 'Switched to <strong>' + modeNames[mode] + '</strong> mode. Adjusting analytical lens. What would you like to analyze?', true);
+}
+
+function usePrompt(btn) {
+  document.getElementById('user-input').value = btn.textContent;
+  document.getElementById('user-input').focus();
+}
+
+document.getElementById('user-input').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+
+document.getElementById('user-input').addEventListener('keydown', function(e) {
+  if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+function addMessage(role, content, isHTML) {
+  const log = document.getElementById('chat-log');
+  const div = document.createElement('div');
+  div.className = 'msg';
+  const time = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false});
+  if(role === 'user') {
+    div.innerHTML = `<div class="msg-meta"><span class="badge badge-user">YOU</span> · ${time}</div><div class="msg-bubble user-bubble">${esc(content)}</div>`;
+  } else {
+    const fmt = isHTML ? content : formatResponse(content);
+    div.innerHTML = `<div class="msg-meta"><span class="badge badge-ai">ALPHA DESK AI</span> · ${time}</div><div class="msg-bubble">${fmt}</div>`;
+  }
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function esc(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function formatResponse(text) {
+  text = text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+  text = text.replace(/\*(.*?)\*/g,'<em>$1</em>');
+  text = text.replace(/\bBULLISH\b/g,'<span class="signal sig-bull">BULLISH</span>');
+  text = text.replace(/\bBEARISH\b/g,'<span class="signal sig-bear">BEARISH</span>');
+  text = text.replace(/\bNEUTRAL\b/g,'<span class="signal sig-neut">NEUTRAL</span>');
+  text = text.replace(/```([\s\S]*?)```/g,'<pre class="code-block">$1</pre>');
+  text = text.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+  return text;
+}
+
+function addThinking() {
+  const log = document.getElementById('chat-log');
+  const div = document.createElement('div');
+  div.className = 'msg'; div.id = 'thinking-indicator';
+  div.innerHTML = `<div class="thinking"><div class="thinking-dots"><span></span><span></span><span></span></div><span class="thinking-txt">Analyzing position...</span></div>`;
+  log.appendChild(div); log.scrollTop = log.scrollHeight;
+}
+
+async function sendMessage() {
+  const input = document.getElementById('user-input');
+  const sendBtn = document.getElementById('send-btn');
+  const text = input.value.trim();
+  if(!text) return;
+  input.value = ''; input.style.height = 'auto';
+  sendBtn.disabled = true;
+  addMessage('user', text);
+  conversationHistory.push({role:'user', content: text});
+  addThinking();
+  const msgs = ['Analyzing position...','Running scenario models...','Cross-referencing signals...','Building thesis...'];
+  let ti = 0;
+  const intv = setInterval(() => {
+    ti = (ti+1) % msgs.length;
+    const el = document.querySelector('#thinking-indicator .thinking-txt');
+    if(el) el.textContent = msgs[ti];
+  }, 1800);
+  try {
+    const fullSystem = systemPrompt + '\n\nCurrent mode: ' + (modeContexts[currentMode] || modeContexts.macro);
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:fullSystem,messages:conversationHistory})
+    });
+    const data = await res.json();
+    clearInterval(intv);
+    document.getElementById('thinking-indicator')?.remove();
+    if(data.content && data.content[0]) {
+      const aiText = data.content[0].text;
+      conversationHistory.push({role:'assistant', content: aiText});
+      addMessage('ai', aiText);
+      if(conversationHistory.length > 20) conversationHistory = conversationHistory.slice(-16);
+    } else throw new Error('No response');
+  } catch(err) {
+    clearInterval(intv);
+    document.getElementById('thinking-indicator')?.remove();
+    addMessage('ai', 'Connection error. Check your API setup and try again.', true);
+  }
+  sendBtn.disabled = false;
+}
+
+const h = new Date().getHours();
+document.getElementById('mkt-status').textContent = (h>=9&&h<16) ? 'MARKETS OPEN · NYSE · NASDAQ' : 'MARKETS CLOSED · AFTER HOURS';
+</script>
 </body>
 </html>
